@@ -1,2 +1,2 @@
 # CSC132-Arm
-The Final Project for CSC 132
+The Final Pi Project for CSC 132
