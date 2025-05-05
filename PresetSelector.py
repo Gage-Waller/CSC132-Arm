@@ -1,9 +1,3 @@
-# Detect if flashdrive is inserted      done
-# obtain file path                      done
-# Read contents on flash drive and write to db on RPi done
-# Reads onboard database                done
-# Have basic GUI to list Arm Presets    done
-# Gui must have options to delete presets, select presets, and scan for flashdrive done
 
 import psutil
 import time
@@ -12,13 +6,8 @@ import tkinter as tk
 from tkinter import ttk
 import serial
 
-#/dev/ttyACM0'
-
-ser = serial.Serial('COM3', 115200, timeout=1)
+ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1)
 ser.flush()
-
-
-
 
 def readFile(file):
     statList = []
@@ -32,8 +21,8 @@ def readFile(file):
         finalstatList.append(updatedStat)
     return finalstatList
 
-file_to_read = r"D:\Preset_maker\data.txt"
-write_to_file = r"C:\Users\andyb\Desktop\CSC132\PresetSelector\database.txt"
+file_to_read = r"/media/raspberry/16 GB Volume/Preset_maker/data.txt"
+write_to_file = r"/home/raspberry/Desktop/PresetSelector/database.txt"
 
 # Check if the source file exists and copy its contents
 if os.path.exists(file_to_read):
@@ -115,9 +104,10 @@ class ListFrame(ttk.Frame):
     
     def delete_preset(self, preset_name):
         print(f"Deleted preset: {preset_name}")
-        
+
+
 def unselect():
-    ser.write("0,0,0,0,0,0,0")
+    ser.write("0,0,0,0,0,0,0\n".encode('utf-8'))
     return print("Grip Unselected")
     
         
@@ -127,28 +117,27 @@ window = tk.Tk()
 window.geometry('600x400')
 window.title('Preset Selector')
 
+# uses the dictionary created from database to get each buttons respective list of values
 def get_servo_values(name):
     values = (presetNames[name])
     print(type(values))
     return values
 
-
-# A1 = list[0]
-#     A2 = list[1]
-#     A3 = list[2]
-#     A4 = list[3]
-#     A5 = list[4]
-#     A6 = list[5]
-#     A7 = list[6]
-
+# sends the servo values to the arduino via serial communication
 def set_servo_values(list):
-    for value in list:
-        ser.write(f"{value}\n".encode('utf-8'))
-        print(value)
+    A1 = list[0]
+    A2 = list[1]
+    A3 = list[2]
+    A4 = list[3]
+    A5 = list[4]
+    A6 = list[5]
+    A7 = list[6]
+    ser.write(f"{A1},{A2},{A3},{A4},{A5},{A6},{A7}\n".encode('utf-8'))
     print('servo data sent')
     return
 
-
+# Checks if the file path exists of database.txt
+# if so convert the string into a key dictionary of name and values, values being a list of all numbers
 if os.path.exists(write_to_file):
     rawNames = readFile(write_to_file)
     print("Raw Names:", rawNames)
@@ -167,26 +156,11 @@ if os.path.exists(write_to_file):
 else:
     presetNames = []
 
-    # presetNames = []
-    # seen = set()
-
-    
-    # for name in rawNames:
-    #     if name not in seen:
-    #         seen.add(name)
-    #         preset_name = name.split(',')[0]
-    #         t = name.split(',')
-    #         values = get_servo_values(t)
-    #         print(values)
-    #         presetNames.append(preset_name)
-
-
-
 # Create the list frame
 list_frame = ListFrame(window, presetNames, 50)
 
-scan_button = ttk.Button(window, text="Unselect Grip", command=unselect)
-scan_button.pack(pady=10)
+unselect_button = ttk.Button(window, text="Unselect Grip", command=unselect)
+unselect_button.pack(pady=10)
 
 # run 
 window.mainloop()
